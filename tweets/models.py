@@ -15,9 +15,12 @@ class Tweet(BaseModel):
     def __str__(self):
         return self.payload
 
+    def like_count(self):
+        return self.likes.count()
+
 class Like(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE)
+    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE, related_name='likes')
 
     def __str__(self):
         return f"{self.user.username} liked '{self.tweet.payload}'"
