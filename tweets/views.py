@@ -2,32 +2,31 @@ from django.shortcuts import render
 from .models import Tweet
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from django.views import View
-from django.http import JsonResponse
+from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
 
 def tweet_list(request):
     tweets = Tweet.objects.all()
     return render(request, 'tweets/tweet_list.html', {'tweets': tweets})
 
-class TweetSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+class TweetSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source='user.username')
-    payload = serializers.CharField()
-    created_at = serializers.DateTimeField()
 
-class TweetListView(View):
+    class Meta:
+        model = Tweet
+        fields = ['id', 'user', 'payload', 'created_at']
+
+class TweetListView(APIView):
     def get(self, request):
         tweets = Tweet.objects.all()
         serializer = TweetSerializer(tweets, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
 
-class UserTweetListView(View):
+# 리팩터링한 UserTweetListView
+class UserTweetListView(APIView):
     def get(self, request, user_id):
-        try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'User does not exist'}, status=404)
-
+        user = get_object_or_404(User, pk=user_id)
         tweets = Tweet.objects.filter(user=user)
         serializer = TweetSerializer(tweets, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
